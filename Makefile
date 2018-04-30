@@ -103,7 +103,7 @@ PROJECT_FILES = $(shell git ls-files  | grep -v ^test | grep -v ^unit-test | \
 	grep -v ^LICENSE )
 RELEASE_TEMPLATES = $(shell git ls-files | grep "release/templates")
 IMAGES = peer orderer ccenv javaenv buildenv testenv tools
-RELEASE_PLATFORMS = windows-amd64 darwin-amd64 linux-amd64 linux-ppc64le linux-s390x
+RELEASE_PLATFORMS = windows-amd64 darwin-amd64 linux-amd64 linux-ppc64le linux-s390x linux-arm64 linux-arm
 RELEASE_PKGS = configtxgen cryptogen configtxlator peer orderer
 
 pkgmap.cryptogen      := $(PKGNAME)/common/tools/cryptogen
@@ -359,6 +359,24 @@ release/linux-s390x: DOCKER_ARCH=s390x
 release/linux-s390x: GO_TAGS+= nopkcs11
 release/linux-s390x: $(patsubst %,release/linux-s390x/bin/%, $(RELEASE_PKGS)) release/linux-s390x/install
 
+fix_arm64: SHELL:=/bin/bash
+fix_arm64:
+	bash -c	'cd vendor/github.com/milagro-crypto/amcl/version3/go/; for i in $$(seq 1 23); do printf "%d\n0\n" $$i | python3 config64.py; done'
+
+fix_arm32: SHELL:=/bin/bash
+fix_arm32:
+	bash -c	'cd vendor/github.com/milagro-crypto/amcl/version3/go/; for i in $$(seq 1 23); do printf "%d\n0\n" $$i | python3 config32.py; done'
+
+release/linux-arm64: GOARCH=arm64
+release/linux-arm64: DOCKER_ARCH=arm64
+release/linux-arm64: GO_TAGS+= nopkcs11
+release/linux-arm64: fix_arm64 $(patsubst %,release/linux-arm64/bin/%, $(RELEASE_PKGS)) release/linux-arm64/install
+
+release/linux-arm: GOARCH=arm
+release/linux-arm: DOCKER_ARCH=arm
+release/linux-arm: GO_TAGS+= nopkcs11
+release/linux-arm:  fix_arm32 $(patsubst %,release/linux-arm/bin/%, $(RELEASE_PKGS)) release/linux-arm/install
+
 release/%/bin/configtxlator: $(PROJECT_FILES)
 	@echo "Building $@ for $(GOOS)-$(GOARCH)"
 	mkdir -p $(@D)
@@ -440,6 +458,8 @@ dist-clean:
 	-@rm -rf release/linux-amd64/hyperledger-fabric-linux-amd64.$(PROJECT_VERSION).tar.gz ||:
 	-@rm -rf release/linux-ppc64le/hyperledger-fabric-linux-ppc64le.$(PROJECT_VERSION).tar.gz ||:
 	-@rm -rf release/linux-s390x/hyperledger-fabric-linux-s390x.$(PROJECT_VERSION).tar.gz ||:
+	-@rm -rf release/linux-arm64/hyperledger-fabric-linux-arm64.$(PROJECT_VERSION).tar.gz ||:
+	-@rm -rf release/linux-arm/hyperledger-fabric-linux-arm.$(PROJECT_VERSION).tar.gz ||:
 
 %-release-clean:
 	$(eval TARGET = ${patsubst %-release-clean,%,${@}})
