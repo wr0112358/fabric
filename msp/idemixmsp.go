@@ -20,8 +20,8 @@ import (
 	"reflect"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-amcl/amcl"
-	"github.com/hyperledger/fabric-amcl/amcl/FP256BN"
+	"github.com/milagro-crypto/amcl/version3/go/amcl"
+	"github.com/milagro-crypto/amcl/version3/go/amcl/FP256BN"
 	"github.com/hyperledger/fabric/idemix"
 	m "github.com/hyperledger/fabric/protos/msp"
 	logging "github.com/op/go-logging"
